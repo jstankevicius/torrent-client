@@ -1,5 +1,3 @@
-import jdk.jshell.spi.ExecutionControl;
-
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,7 +23,6 @@ public class BencodeParser {
 
             BencodeParser b = new BencodeParser(in);
             Map<String, Object> d = b.getDict();
-            System.out.println(d.toString());
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -101,7 +98,7 @@ public class BencodeParser {
      * @throws IOException if the input stream is closed, or some other IO error
      * occurs.
      */
-    public long getInt() throws IOException {
+    public Long getInt() throws IOException {
         assertType(BencodeType.INT);
 
         StringBuilder sb = new StringBuilder();
@@ -139,21 +136,21 @@ public class BencodeParser {
      * @throws IOException if the input stream is closed, or some other IO error
      * occurs.
      */
-    public Map<String, Object> getDict() throws IOException {
+    public Map<String, ?> getDict() throws IOException {
         assertType(BencodeType.DICT);
 
-        Map<String, Object> dict = new HashMap<>();
+        Map<String, BencodeObject<?>> dict = new HashMap<>();
 
         // read in key-value pairs:
         while (peek() != 'e') {
             // get key:
-            String key = getString();
+            String key = getString().get();
             Object val = read();
             System.out.printf("%s: %s\n", key, val);
             dict.put(key, val);
         }
 
-        return dict;
+        return new BencodeObject<Map<String, BencodeObject<?>>>(dict);
     }
 
     /**
@@ -162,7 +159,7 @@ public class BencodeParser {
      * @throws IOException if the input stream is closed, or some other IO error
      * occurs.
      */
-    public List<Object> getList() throws IOException {
+    public BencodeObject<List<Object>> getList() throws IOException {
         assertType(BencodeType.LIST);
 
         ArrayList<Object> l = new ArrayList<>();
@@ -186,7 +183,7 @@ public class BencodeParser {
      * @throws IOException if the input stream is closed, or some other IO error
      * occurs.
      */
-    public Object read() throws IOException {
+    public BencodeObject<?> read() throws IOException {
         int typ = peek();
 
         if (typ == -1)
